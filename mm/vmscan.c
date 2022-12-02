@@ -4688,7 +4688,7 @@ static bool lruvec_is_reclaimable(struct lruvec *lruvec, struct scan_control *sc
 
 	mem_cgroup_calculate_protection(NULL, memcg);
 
-	return !mem_cgroup_below_min(memcg);
+	return !mem_cgroup_below_min(NULL, memcg);
 }
 
 /* to protect the working set of the last N jiffies */
@@ -5436,7 +5436,7 @@ static long get_nr_to_scan(struct lruvec *lruvec, struct scan_control *sc, bool 
 	struct mem_cgroup *memcg = lruvec_memcg(lruvec);
 	DEFINE_MAX_SEQ(lruvec);
 
-	if (mem_cgroup_below_min(memcg))
+	if (mem_cgroup_below_min(sc->target_mem_cgroup, memcg))
 		return 0;
 
 	if (!should_run_aging(lruvec, max_seq, sc, can_swap, &nr_to_scan))
@@ -5550,10 +5550,10 @@ static int shrink_one(struct lruvec *lruvec, struct scan_control *sc)
 
 	mem_cgroup_calculate_protection(NULL, memcg);
 
-	if (mem_cgroup_below_min(memcg))
+	if (mem_cgroup_below_min(NULL, memcg))
 		return MEMCG_LRU_YOUNG;
 
-	if (mem_cgroup_below_low(memcg)) {
+	if (mem_cgroup_below_low(NULL, memcg)) {
 		/* see the comment on MEMCG_NR_GENS */
 		if (seg != MEMCG_LRU_TAIL)
 			return MEMCG_LRU_TAIL;
@@ -6685,13 +6685,13 @@ static void shrink_node_memcgs(pg_data_t *pgdat, struct scan_control *sc)
 
 		mem_cgroup_calculate_protection(target_memcg, memcg);
 
-		if (mem_cgroup_below_min(memcg)) {
+		if (mem_cgroup_below_min(target_memcg, memcg)) {
 			/*
 			 * Hard protection.
 			 * If there is no reclaimable memory, OOM.
 			 */
 			continue;
-		} else if (mem_cgroup_below_low(memcg)) {
+		} else if (mem_cgroup_below_low(target_memcg, memcg)) {
 			/*
 			 * Soft protection.
 			 * Respect the protection only as long as
