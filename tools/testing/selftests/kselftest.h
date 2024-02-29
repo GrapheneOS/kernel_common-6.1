@@ -229,7 +229,8 @@ static inline void ksft_test_result_error(const char *msg, ...)
 }
 
 static inline
-void ksft_test_result_code(int exit_code, const char *msg, ...)
+void ksft_test_result_code(int exit_code, const char *test_name,
+			   const char *msg, ...)
 {
 	const char *tap_code = "ok";
 	const char *directive = "";
@@ -260,7 +261,7 @@ void ksft_test_result_code(int exit_code, const char *msg, ...)
 	}
 
 	va_start(args, msg);
-	printf("%s %u%s", tap_code, ksft_test_num(), directive);
+	printf("%s %u %s%s", tap_code, ksft_test_num(), test_name, directive);
 	errno = saved_errno;
 	vprintf(msg, args);
 	va_end(args);
