@@ -989,6 +989,7 @@ void __run_test(struct __fixture_metadata *f,
 		struct __test_metadata *t)
 {
 	char test_name[1024];
+	const char *diagnostic;
 
 	/* reset test struct */
 	t->passed = 1;
@@ -1027,9 +1028,13 @@ void __run_test(struct __fixture_metadata *f,
 	ksft_print_msg("         %4s  %s\n",
 		       t->passed ? "OK" : "FAIL", test_name);
 
+	if (t->results->reason[0])
+		diagnostic = t->results->reason;
+	else
+		diagnostic = "unknown";
+
 	if (t->skip)
-		ksft_test_result_skip("%s\n", t->results->reason[0] ?
-					t->results->reason : "unknown");
+		ksft_test_result_code(KSFT_SKIP, "%s\n", diagnostic);
 	else
 		ksft_test_result(t->passed, "%s\n", test_name);
 }
