@@ -55,7 +55,6 @@
 #endif
 #include <asm/types.h>
 #include <errno.h>
-#include <limits.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -989,7 +988,7 @@ void __run_test(struct __fixture_metadata *f,
 		struct __fixture_variant_metadata *variant,
 		struct __test_metadata *t)
 {
-	char test_name[LINE_MAX];
+	char test_name[1024];
 
 	/* reset test struct */
 	t->passed = 1;
