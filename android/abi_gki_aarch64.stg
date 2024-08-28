@@ -367598,15 +367598,6 @@ elf_symbol {
   full_name: "devm_spi_register_controller"
 }
 elf_symbol {
-  id: 0x43a4025b
-  name: "devm_tegra_memory_controller_get"
-  is_defined: true
-  symbol_type: FUNCTION
-  crc: 0x986b8e36
-  type_id: 0x2195423c
-  full_name: "devm_tegra_memory_controller_get"
-}
-elf_symbol {
   id: 0x0dd13028
   name: "devm_thermal_of_cooling_device_register"
   is_defined: true
@@ -407772,15 +407763,6 @@ elf_symbol {
   crc: 0xceb50012
   type_id: 0x129c1f38
   full_name: "tcpm_vbus_change"
-}
-elf_symbol {
-  id: 0xa8f0fe44
-  name: "tegra_mc_probe_device"
-  is_defined: true
-  symbol_type: FUNCTION
-  crc: 0x3f100eaf
-  type_id: 0x9079b097
-  full_name: "tegra_mc_probe_device"
 }
 elf_symbol {
   id: 0x7cfd9233
