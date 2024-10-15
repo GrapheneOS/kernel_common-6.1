@@ -1847,7 +1847,8 @@ next_alloc:
 			}
 		}
 
-		if (has_not_enough_free_secs(sbi, 0,
+		if (has_not_enough_free_secs(sbi, 0, f2fs_sb_has_blkzoned(sbi) ?
+			ZONED_PIN_SEC_REQUIRED_COUNT :
 			GET_SEC_FROM_SEG(sbi, overprovision_segments(sbi)))) {
 			f2fs_down_write_trace(&sbi->gc_lock, &gc_control.lc);
 			err = f2fs_gc(sbi, &gc_control);
