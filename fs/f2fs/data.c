@@ -4059,7 +4059,7 @@ retry:
 
 		if ((pblock - SM_I(sbi)->main_blkaddr) & sec_blks_mask ||
 				nr_pblocks & sec_blks_mask ||
-				!f2fs_valid_pinned_area(sbi, pblock)) {
+				f2fs_is_sequential_zone_area(sbi, pblock)) {
 			bool last_extent = false;
 
 			not_aligned++;
