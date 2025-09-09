@@ -28,9 +28,7 @@
 #include <linux/mount.h>
 #include <linux/pseudo_fs.h>
 
-#ifndef __GENKSYMS__
 #include <trace/events/kmem.h>
-#endif
 #include <trace/hooks/dmabuf.h>
 
 #include <uapi/linux/dma-buf.h>
