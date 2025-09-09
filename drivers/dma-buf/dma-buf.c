@@ -306,8 +306,6 @@ static void add_task_dmabuf_record(struct task_dma_buf_info *dmabuf_info,
 	list_add(&rec->node, &dmabuf_info->dmabufs);
 	dmabuf_info->dmabuf_count++;
 	dmabuf_info->rss += dmabuf->size;
-	if (dmabuf_info->rss > dmabuf_info->rss_hwm)
-		dmabuf_info->rss_hwm = dmabuf_info->rss;
 }
 
 /**
@@ -449,7 +447,6 @@ retry:
 	}
 	to->dmabuf_count = from->dmabuf_count;
 	to->rss = from->rss;
-	to->rss_hwm = to->rss;
 	spin_unlock(&from->lock);
 
 	trim_task_dmabuf_records_locked();
