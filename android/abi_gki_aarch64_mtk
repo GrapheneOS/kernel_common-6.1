@@ -1,7 +1,6 @@
 [abi_symbol_list]
   access_process_vm
   activate_task
-  add_memory_driver_managed
   addrconf_add_linklocal
   addrconf_prefix_rcv_add_addr
   add_timer
@@ -537,7 +536,6 @@
   devm_mbox_controller_register
   devm_mdiobus_alloc_size
   devm_memremap
-  devm_memremap_pages
   devm_mfd_add_devices
   devm_nvmem_cell_get
   devm_nvmem_cell_put
@@ -1088,7 +1086,6 @@
   generic_handle_domain_irq
   generic_handle_irq
   generic_handle_irq_safe
-  generic_online_page
   generic_parse_monolithic
   genlmsg_multicast_allns
   genlmsg_put
@@ -1628,8 +1625,6 @@
   memdup_user
   memdup_user_nul
   memmove
-  memory_group_register_dynamic
-  memory_group_unregister
   memory_read_from_buffer
   memparse
   mempool_kfree
@@ -1642,7 +1637,6 @@
   __memset_io
   memstart_addr
   memunmap
-  mhp_get_pluggable_range
   migrate_swap
   __migrate_task
   mipi_dsi_attach
@@ -2029,7 +2023,6 @@
   perf_trace_buf_alloc
   perf_trace_run_bpf_submit
   pfn_is_map_memory
-  pfn_to_online_page
   phy_attached_info
   phy_configure
   phy_connect
