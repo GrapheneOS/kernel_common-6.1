@@ -367,7 +367,6 @@
   __trace_puts
   try_to_free_mem_cgroup_pages
   typec_mux_get_drvdata
-  unregister_memory_notifier
   unregister_tcf_proto_ops
   v4l2_i2c_subdev_init
   wait_for_completion_io_timeout
