@@ -532,7 +532,6 @@
   devm_mbox_controller_register
   devm_mdiobus_alloc_size
   devm_memremap
-  devm_memremap_pages
   devm_mfd_add_devices
   devm_nvmem_cell_get
   devm_nvmem_cell_put
