@@ -356,7 +356,6 @@
   __register_chrdev
   register_console
   register_die_notifier
-  register_memory_notifier
   register_netdev
   register_reboot_notifier
   register_restart_handler
@@ -541,7 +540,6 @@
   unregister_chrdev_region
   unregister_console
   unregister_die_notifier
-  unregister_memory_notifier
   unregister_netdev
   unregister_reboot_notifier
   unregister_restart_handler
