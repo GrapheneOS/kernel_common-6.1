@@ -507,6 +507,9 @@ DECLARE_HOOK(android_vh_swap_device_swapon,
 DECLARE_HOOK(android_vh_swap_device_swapoff,
 	TP_PROTO(struct swap_info_struct *si),
 	TP_ARGS(si));
+DECLARE_HOOK(android_vh_adjust_nr_reclaimed,
+	TP_PROTO(struct folio *folio, unsigned int *nr_reclaimed),
+	TP_ARGS(folio, nr_reclaimed));
 #endif /* _TRACE_HOOK_MM_H */
 
 /* This part must be outside protection */
