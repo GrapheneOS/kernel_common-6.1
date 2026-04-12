@@ -20,6 +20,7 @@
  */
 u64 id_aa64pfr0_el1_sys_val;
 u64 id_aa64pfr1_el1_sys_val;
+u64 id_aa64zfr0_el1_sys_val;
 u64 id_aa64isar0_el1_sys_val;
 u64 id_aa64isar1_el1_sys_val;
 u64 id_aa64isar2_el1_sys_val;
@@ -92,6 +93,9 @@ static u64 get_pvm_id_aa64pfr0(const struct kvm_vcpu *vcpu)
 	set_mask |= get_restricted_features_unsigned(id_aa64pfr0_el1_sys_val,
 		PVM_ID_AA64PFR0_RESTRICT_UNSIGNED);
 
+	if (!vcpu_has_sve(vcpu))
+		set_mask &= ~ARM64_FEATURE_MASK(ID_AA64PFR0_EL1_SVE);
+
 	return (id_aa64pfr0_el1_sys_val & allow_mask) | set_mask;
 }
 
@@ -108,11 +112,9 @@ static u64 get_pvm_id_aa64pfr1(const struct kvm_vcpu *vcpu)
 
 static u64 get_pvm_id_aa64zfr0(const struct kvm_vcpu *vcpu)
 {
-	/*
-	 * No support for Scalable Vectors, therefore, hyp has no sanitized
-	 * copy of the feature id register.
-	 */
-	BUILD_BUG_ON(PVM_ID_AA64ZFR0_ALLOW != 0ULL);
+	if (vcpu_has_sve(vcpu))
+		return id_aa64zfr0_el1_sys_val & PVM_ID_AA64ZFR0_ALLOW;
+
 	return 0;
 }
 
