@@ -40,7 +40,6 @@ int kvm_arm_init_sve(void)
 	if (system_supports_sve()) {
 		kvm_sve_max_vl = sve_max_virtualisable_vl();
 		kvm_host_sve_max_vl = sve_max_vl();
-		kvm_nvhe_sym(kvm_host_sve_max_vl) = kvm_host_sve_max_vl;
 
 		/*
 		 * The get_sve_reg()/set_sve_reg() ioctl interface will need
@@ -50,6 +49,9 @@ int kvm_arm_init_sve(void)
 		 */
 		if (WARN_ON(kvm_sve_max_vl > VL_ARCH_MAX))
 			kvm_sve_max_vl = VL_ARCH_MAX;
+
+		kvm_nvhe_sym(kvm_sve_max_vl) = kvm_sve_max_vl;
+		kvm_nvhe_sym(kvm_host_sve_max_vl) = kvm_host_sve_max_vl;
 
 		/*
 		 * Don't even try to make use of vector lengths that
@@ -102,15 +104,17 @@ static int kvm_vcpu_finalize_sve(struct kvm_vcpu *vcpu)
 		    vl > VL_ARCH_MAX))
 		return -EIO;
 
-	reg_sz = vcpu_sve_state_size(vcpu);
-	buf = kzalloc(reg_sz, GFP_KERNEL_ACCOUNT);
+	reg_sz = PAGE_ALIGN(vcpu_sve_state_size(vcpu));
+	buf = alloc_pages_exact(reg_sz, GFP_KERNEL_ACCOUNT);
 	if (!buf)
 		return -ENOMEM;
 
-	ret = kvm_share_hyp(buf, buf + reg_sz);
-	if (ret) {
-		kfree(buf);
-		return ret;
+	if (!kvm_vm_is_protected(vcpu->kvm)) {
+		ret = kvm_share_hyp(buf, buf + reg_sz);
+		if (ret) {
+			free_pages_exact(buf, reg_sz);
+			return ret;
+		}
 	}
 
 	vcpu->arch.sve_state = buf;
@@ -147,14 +151,19 @@ void kvm_arm_vcpu_destroy(struct kvm_vcpu *vcpu)
 	void *sve_state = vcpu->arch.sve_state;
 
 	kvm_unshare_hyp(vcpu, vcpu + 1);
-	if (sve_state)
-		kvm_unshare_hyp(sve_state, sve_state + vcpu_sve_state_size(vcpu));
-	kfree(sve_state);
+	if (sve_state) {
+		size_t reg_sz = PAGE_ALIGN(vcpu_sve_state_size(vcpu));
+
+		if (!kvm_vm_is_protected(vcpu->kvm))
+			kvm_unshare_hyp(sve_state, sve_state + reg_sz);
+
+		free_pages_exact(sve_state, reg_sz);
+	}
 }
 
 static void kvm_vcpu_reset_sve(struct kvm_vcpu *vcpu)
 {
-	if (vcpu_has_sve(vcpu))
+	if (!kvm_vm_is_protected(vcpu->kvm) && vcpu_has_sve(vcpu))
 		memset(vcpu->arch.sve_state, 0, vcpu_sve_state_size(vcpu));
 }
 
