@@ -47,6 +47,7 @@
 #include <linux/swap_cgroup.h>
 #include "swap.h"
 #include <trace/hooks/bl_hib.h>
+#include <trace/hooks/mm.h>
 
 static bool swap_count_continued(struct swap_info_struct *, pgoff_t,
 				 unsigned char);
@@ -727,6 +728,7 @@ static void swap_range_free(struct swap_info_struct *si, unsigned long offset,
 	unsigned long begin = offset;
 	unsigned long end = offset + nr_entries - 1;
 	void (*swap_slot_free_notify)(struct block_device *, unsigned long);
+	trace_android_vh_check_swap_range_free(si, offset, nr_entries);
 
 	if (offset < si->lowest_bit)
 		si->lowest_bit = offset;
@@ -1053,6 +1055,7 @@ int get_swap_pages(int n_goal, swp_entry_t swp_entries[], int entry_size)
 	long avail_pgs;
 	int n_ret = 0;
 	int node;
+	bool bypass = false;
 
 	/* Only single cluster request supported */
 	WARN_ON_ONCE(n_goal > 1 && size == SWAPFILE_CLUSTER);
@@ -1072,6 +1075,9 @@ int get_swap_pages(int n_goal, swp_entry_t swp_entries[], int entry_size)
 start_over:
 	node = numa_node_id();
 	plist_for_each_entry_safe(si, next, &swap_avail_heads[node], avail_lists[node]) {
+		trace_android_vh_pick_swap_device_bypass(swp_entries, si, &bypass);
+		if(bypass)
+			goto nextsi;
 		/* requeue si to after same-priority siblings */
 		plist_requeue(&si->avail_lists[node], &swap_avail_heads[node]);
 		spin_unlock(&swap_avail_lock);
@@ -2490,6 +2496,7 @@ SYSCALL_DEFINE1(swapoff, const char __user *, specialfile)
 	set_current_oom_origin();
 	err = try_to_unuse(p->type);
 	clear_current_oom_origin();
+	trace_android_vh_swap_device_swapoff(p);
 
 	if (err) {
 		/* re-insert swap space back into swap_list */
@@ -3242,6 +3249,7 @@ SYSCALL_DEFINE2(swapon, const char __user *, specialfile, int, swap_flags)
 	mutex_unlock(&swapon_mutex);
 	atomic_inc(&proc_poll_event);
 	wake_up_interruptible(&proc_poll_wait);
+	trace_android_vh_swap_device_swapon(p);
 
 	error = 0;
 	goto out;
