@@ -47286,10 +47286,10 @@ member {
   offset: 512
 }
 member {
-  id: 0x14e2bc0d
+  id: 0x14e2b5b9
   name: "allow_connect"
   type_id: 0x6d7f5ff6
-  offset: 7568
+  offset: 7632
 }
 member {
   id: 0x1098af81
@@ -67390,10 +67390,10 @@ member {
   offset: 1152
 }
 member {
-  id: 0x997c2cff
+  id: 0x997c277f
   name: "connect_lock"
   type_id: 0xa7c362b0
-  offset: 8000
+  offset: 8064
 }
 member {
   id: 0xee1e8424
@@ -98056,6 +98056,12 @@ member {
   offset: 8960
 }
 member {
+  id: 0x7045393c
+  name: "gadget_release"
+  type_id: 0x0e93a255
+  offset: 128
+}
+member {
   id: 0x874e48ae
   name: "gadget_ssp_rate"
   type_id: 0xefa672c8
@@ -121071,12 +121077,6 @@ member {
   offset: 45824
 }
 member {
-  id: 0x7c00e340
-  name: "list"
-  type_id: 0xd3c80119
-  offset: 7424
-}
-member {
   id: 0x7c00e3d1
   name: "list"
   type_id: 0xd3c80119
@@ -121189,6 +121189,12 @@ member {
   name: "list"
   type_id: 0xd3c80119
   offset: 2688
+}
+member {
+  id: 0x7c00eb44
+  name: "list"
+  type_id: 0xd3c80119
+  offset: 7488
 }
 member {
   id: 0x7c00ebab
@@ -188319,10 +188325,10 @@ member {
   offset: 448
 }
 member {
-  id: 0x5367cfd2
+  id: 0x5367c615
   name: "started"
   type_id: 0x6d7f5ff6
-  offset: 7560
+  offset: 7624
 }
 member {
   id: 0x539372a0
@@ -208129,10 +208135,10 @@ member {
   offset: 960
 }
 member {
-  id: 0xa8b1a153
+  id: 0xa8b1af73
   name: "vbus"
   type_id: 0x6d7f5ff6
-  offset: 7552
+  offset: 7616
 }
 member {
   id: 0x7dc18b99
@@ -208190,10 +208196,10 @@ member {
   bitsize: 1
 }
 member {
-  id: 0xdf3f679f
+  id: 0xdf3f6f30
   name: "vbus_work"
   type_id: 0x1f3c8679
-  offset: 7616
+  offset: 7680
 }
 member {
   id: 0xf6f15b5e
@@ -272896,16 +272902,17 @@ struct_union {
   kind: STRUCT
   name: "usb_udc"
   definition {
-    bytesize: 1048
+    bytesize: 1056
     member_id: 0xd477fd9a
     member_id: 0x1875f4a8
-    member_id: 0xce1ac88b
-    member_id: 0x7c00e340
-    member_id: 0xa8b1a153
-    member_id: 0x5367cfd2
-    member_id: 0x14e2bc0d
-    member_id: 0xdf3f679f
-    member_id: 0x997c2cff
+    member_id: 0x7045393c
+    member_id: 0xce1ac980
+    member_id: 0x7c00eb44
+    member_id: 0xa8b1af73
+    member_id: 0x5367c615
+    member_id: 0x14e2b5b9
+    member_id: 0xdf3f6f30
+    member_id: 0x997c277f
   }
 }
 struct_union {
