@@ -1481,6 +1481,12 @@ enum folio_references {
 	FOLIOREF_ACTIVATE,
 };
 
+static inline bool is_exec_file_folio(struct folio *folio,
+		vm_flags_t vm_flags)
+{
+	return (vm_flags & VM_EXEC) && folio_is_file_lru(folio);
+}
+
 static enum folio_references folio_check_references(struct folio *folio,
 						  struct scan_control *sc)
 {
@@ -1539,7 +1545,7 @@ static enum folio_references folio_check_references(struct folio *folio,
 		/*
 		 * Activate file-backed executable folios after first usage.
 		 */
-		if ((vm_flags & VM_EXEC) && folio_is_file_lru(folio))
+		if (is_exec_file_folio(folio, vm_flags))
 			return FOLIOREF_ACTIVATE;
 
 		return FOLIOREF_KEEP;
@@ -2748,7 +2754,7 @@ static void shrink_active_list(unsigned long nr_to_scan,
 			 * IO, plus JVM can create lots of anon VM_EXEC folios,
 			 * so we ignore them here.
 			 */
-			if ((vm_flags & VM_EXEC) && folio_is_file_lru(folio)) {
+			if (is_exec_file_folio(folio, vm_flags)) {
 				bool bypass = false;
 				trace_android_vh_folio_trylock_clear(folio);
 				nr_rotated += folio_nr_pages(folio);
