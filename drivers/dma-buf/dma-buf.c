@@ -1023,7 +1023,7 @@ static long _dma_buf_set_name(struct dma_buf *dmabuf, const char *name)
  * piece of memory is used for multiple purpose between different devices.
  *
  * @dmabuf: [in]     dmabuf buffer that will be renamed.
- * @buf:    [in]     A piece of userspace memory that contains the name of
+ * @name:   [in]     A NUL-terminated string that contains the name of
  *                   the dma-buf.
  *
  * Returns 0 on success. If the dma-buf buffer is already attached to
