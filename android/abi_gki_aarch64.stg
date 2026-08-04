@@ -317337,6 +317337,14 @@ function {
   parameter_id: 0x038de60c
 }
 function {
+  id: 0x9116f146
+  return_type_id: 0x6720d32f
+  parameter_id: 0x3267a784
+  parameter_id: 0x0258f96e
+  parameter_id: 0x18bd6530
+  parameter_id: 0x2dcd339f
+}
+function {
   id: 0x911879fc
   return_type_id: 0x6720d32f
   parameter_id: 0x32ee063f
@@ -375652,6 +375660,15 @@ elf_symbol {
   full_name: "driver_find_device"
 }
 elf_symbol {
+  id: 0x9b35e60f
+  name: "driver_for_each_device"
+  is_defined: true
+  symbol_type: FUNCTION
+  crc: 0xc64193d4
+  type_id: 0x9116f146
+  full_name: "driver_for_each_device"
+}
+elf_symbol {
   id: 0x1f0cd029
   name: "driver_register"
   is_defined: true
@@ -429000,6 +429017,7 @@ interface {
   symbol_id: 0x8fbdd27e
   symbol_id: 0xbde576b8
   symbol_id: 0xa6a7d8d9
+  symbol_id: 0x9b35e60f
   symbol_id: 0x1f0cd029
   symbol_id: 0xd90c83a1
   symbol_id: 0x5234324e
