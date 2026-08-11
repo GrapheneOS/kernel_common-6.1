@@ -109,6 +109,7 @@ static int walk_pmd_range(pud_t *pud, unsigned long addr, unsigned long end,
 	pmd = pmd_offset(pud, addr);
 	do {
 again:
+		walk->action = ACTION_SUBTREE;
 		next = pmd_addr_end(addr, end);
 		if (pmd_none(*pmd)) {
 			if (ops->pte_hole)
@@ -117,8 +118,6 @@ again:
 				break;
 			continue;
 		}
-
-		walk->action = ACTION_SUBTREE;
 
 		/*
 		 * This implies that each ->pmd_entry() handler
@@ -170,6 +169,7 @@ static int walk_pud_range(p4d_t *p4d, unsigned long addr, unsigned long end,
 	pud = pud_offset(p4d, addr);
 	do {
  again:
+		walk->action = ACTION_SUBTREE;
 		next = pud_addr_end(addr, end);
 		if (pud_none(*pud)) {
 			if (ops->pte_hole)
@@ -178,8 +178,6 @@ static int walk_pud_range(p4d_t *p4d, unsigned long addr, unsigned long end,
 				break;
 			continue;
 		}
-
-		walk->action = ACTION_SUBTREE;
 
 		if (ops->pud_entry)
 			err = ops->pud_entry(pud, addr, next, walk);
