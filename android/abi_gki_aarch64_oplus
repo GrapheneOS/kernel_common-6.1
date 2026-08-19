@@ -25,6 +25,7 @@
   down_read_trylock
   drm_crtc_vblank_waitqueue
   filp_close
+  finish_rcuwait
   folio_add_lru
   folio_mapping
   folio_referenced
@@ -200,6 +201,7 @@
   __traceiter_android_vh_clear_curr_lazy
   __traceiter_android_vh_dm_bufio_shrink_scan_bypass
   __traceiter_android_vh_mutex_unlock_slowpath
+  __traceiter_android_vh_mutex_wakeup_patch
   __traceiter_android_vh_read_lazy_flag
   __traceiter_android_vh_resched_curr_lazy
   __traceiter_android_vh_restore_curr_resched
@@ -211,6 +213,7 @@
   __traceiter_android_vh_rwsem_opt_spin_finish
   __traceiter_android_vh_rwsem_opt_spin_start
   __traceiter_android_vh_rwsem_wake_finish
+  __traceiter_android_vh_rwsem_wakeup_patch
   __traceiter_android_vh_adjust_alloc_flags
   __traceiter_android_vh_adjust_kvmalloc_flags
   __traceiter_android_vh_alloc_pages_slowpath
@@ -317,6 +320,7 @@
   __tracepoint_android_vh_clear_curr_lazy
   __tracepoint_android_vh_dm_bufio_shrink_scan_bypass
   __tracepoint_android_vh_mutex_unlock_slowpath
+  __tracepoint_android_vh_mutex_wakeup_patch
   __tracepoint_android_vh_record_mutex_lock_starttime
   __tracepoint_android_vh_record_pcpu_rwsem_starttime
   __tracepoint_android_vh_percpu_rwsem_wq_add
@@ -333,6 +337,7 @@
   __tracepoint_android_vh_rwsem_opt_spin_finish
   __tracepoint_android_vh_rwsem_opt_spin_start
   __tracepoint_android_vh_rwsem_wake_finish
+  __tracepoint_android_vh_rwsem_wakeup_patch
   __tracepoint_android_vh_adjust_alloc_flags
   __tracepoint_android_vh_adjust_kvmalloc_flags
   __tracepoint_android_vh_alloc_pages_slowpath
