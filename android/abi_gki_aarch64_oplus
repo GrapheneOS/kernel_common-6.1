@@ -181,6 +181,9 @@
   __traceiter_android_vh_dup_task_struct
   __traceiter_android_vh_exit_signal
   __traceiter_android_vh_killed_process
+  __traceiter_android_vh_lock_delay_schedule
+  __traceiter_android_vh_lock_task_exit
+  __traceiter_android_vh_lock_task_fork
   __traceiter_android_vh_look_around
   __traceiter_android_vh_look_around_migrate_folio
   __traceiter_android_vh_mem_cgroup_id_remove
@@ -287,6 +290,9 @@
   __tracepoint_android_vh_exit_check
   __tracepoint_android_vh_exit_signal
   __tracepoint_android_vh_killed_process
+  __tracepoint_android_vh_lock_delay_schedule
+  __tracepoint_android_vh_lock_task_exit
+  __tracepoint_android_vh_lock_task_fork
   __tracepoint_android_vh_exit_signal_whether_wake
   __tracepoint_android_vh_mem_cgroup_id_remove
   __tracepoint_android_vh_mem_cgroup_css_offline
