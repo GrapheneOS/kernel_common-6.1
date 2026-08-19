@@ -111,6 +111,9 @@ DECLARE_HOOK(android_vh_alter_mutex_list_add,
 DECLARE_HOOK(android_vh_mutex_unlock_slowpath,
 	TP_PROTO(struct mutex *lock),
 	TP_ARGS(lock));
+DECLARE_HOOK(android_vh_mutex_wakeup_patch,
+	TP_PROTO(struct mutex *lock),
+	TP_ARGS(lock));
 struct rt_mutex_waiter;
 struct ww_acquire_ctx;
 DECLARE_HOOK(android_vh_task_blocks_on_rtmutex,
