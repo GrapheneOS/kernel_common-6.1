@@ -580,3 +580,6 @@ EXPORT_TRACEPOINT_SYMBOL_GPL(android_vh_signal_coredump_check);
 EXPORT_TRACEPOINT_SYMBOL_GPL(android_vh_resched_curr_lazy);
 EXPORT_TRACEPOINT_SYMBOL_GPL(android_vh_restore_curr_resched);
 EXPORT_TRACEPOINT_SYMBOL_GPL(android_vh_clear_curr_lazy);
+EXPORT_TRACEPOINT_SYMBOL_GPL(android_vh_lock_delay_schedule);
+EXPORT_TRACEPOINT_SYMBOL_GPL(android_vh_lock_task_fork);
+EXPORT_TRACEPOINT_SYMBOL_GPL(android_vh_lock_task_exit);
