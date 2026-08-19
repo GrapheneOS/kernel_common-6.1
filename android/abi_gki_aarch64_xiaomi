@@ -741,3 +741,5 @@ __tracepoint_android_vh_migrate_pages_batch_break
 __tracepoint_android_vh_migrate_batch_nr_pages
 
 
+# required by micar power
+emergency_sync

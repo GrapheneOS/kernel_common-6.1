@@ -380516,6 +380516,15 @@ elf_symbol {
   full_name: "emergency_restart"
 }
 elf_symbol {
+  id: 0x9d61f3c6
+  name: "emergency_sync"
+  is_defined: true
+  symbol_type: FUNCTION
+  crc: 0x4408927d
+  type_id: 0x10985193
+  full_name: "emergency_sync"
+}
+elf_symbol {
   id: 0x483e9e6a
   name: "empty_zero_page"
   is_defined: true
@@ -429649,6 +429658,7 @@ interface {
   symbol_id: 0xfa137f83
   symbol_id: 0x109abab4
   symbol_id: 0x2935539f
+  symbol_id: 0x9d61f3c6
   symbol_id: 0x483e9e6a
   symbol_id: 0x8f99729e
   symbol_id: 0xb6a9c6f8
