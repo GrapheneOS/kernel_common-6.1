@@ -2296,6 +2296,7 @@
 
 # required by rk808.ko
   devm_register_sys_off_handler
+  driver_for_each_device
   platform_device_add
   platform_device_alloc
   register_syscore_ops
