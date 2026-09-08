@@ -195775,6 +195775,12 @@ member {
   offset: 3136
 }
 member {
+  id: 0xc10d91ec
+  name: "teardown"
+  type_id: 0x6d7f5ff6
+  offset: 7640
+}
+member {
   id: 0xc16e0c1e
   name: "teardown"
   type_id: 0x0ee450d7
@@ -272911,6 +272917,7 @@ struct_union {
     member_id: 0xa8b1af73
     member_id: 0x5367c615
     member_id: 0x14e2b5b9
+    member_id: 0xc10d91ec
     member_id: 0xdf3f6f30
     member_id: 0x997c277f
   }
