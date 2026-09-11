@@ -3049,8 +3049,7 @@ void virtqueue_dma_sync_single_range_for_cpu(struct virtqueue *_vq,
 	if (!vq->use_dma_api)
 		return;
 
-	dma_sync_single_range_for_cpu(dev, addr, offset, size,
-				      DMA_BIDIRECTIONAL);
+	dma_sync_single_range_for_cpu(dev, addr, offset, size, dir);
 }
 EXPORT_SYMBOL_GPL(virtqueue_dma_sync_single_range_for_cpu);
 
@@ -3076,8 +3075,7 @@ void virtqueue_dma_sync_single_range_for_device(struct virtqueue *_vq,
 	if (!vq->use_dma_api)
 		return;
 
-	dma_sync_single_range_for_device(dev, addr, offset, size,
-					 DMA_BIDIRECTIONAL);
+	dma_sync_single_range_for_device(dev, addr, offset, size, dir);
 }
 EXPORT_SYMBOL_GPL(virtqueue_dma_sync_single_range_for_device);
 
