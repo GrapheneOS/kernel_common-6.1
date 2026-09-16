@@ -286,6 +286,7 @@ static void init_io_req(struct wrap_io_ctx *io_ctx, struct wrap_io_req *req, lof
 			req->iov[nr_segs].iov_len = PAGE_SIZE;
 			req_len -= PAGE_SIZE;
 			nr_segs++;
+			start_bounce_idx++;
 		}
 	}
 
