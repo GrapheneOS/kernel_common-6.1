@@ -368,7 +368,7 @@ int __pkvm_guest_relinquish_to_host(struct pkvm_hyp_vcpu *vcpu,
 		}
 
 		if (pkvm_ipa_range_has_pvmfw(vm, ipa, ipa + PAGE_SIZE))
-			vm->kvm.arch.pkvm.pvmfw_load_addr = PVMFW_INVALID_LOAD_ADDR;
+			vm->pvmfw_relinquished = true;
 	}
 
 	guest_unlock_component(vm);
