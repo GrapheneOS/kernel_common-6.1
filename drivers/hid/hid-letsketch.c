@@ -295,42 +295,13 @@ static int letsketch_probe(struct hid_device *hdev, const struct hid_device_id *
 
 	ret = letsketch_setup_input_tablet(data);
 	if (ret)
-		goto err_shutdown_timer;
+		return ret;
 
 	ret = letsketch_setup_input_tablet_pad(data);
 	if (ret)
-		goto err_shutdown_timer;
+		return ret;
 
-	ret = hid_hw_start(hdev, HID_CONNECT_HIDRAW);
-	if (ret)
-		goto err_shutdown_timer;
-
-	return 0;
-
-err_shutdown_timer:
-	/*
-	 * Drain any pending callback and permanently disable the timer
-	 * before devm releases data: if hid_hw_start() enabled I/O on an
-	 * always-poll-quirk device and then failed, raw_event may have
-	 * armed the timer already.
-	 */
-	timer_shutdown_sync(&data->inrange_timer);
-	return ret;
-}
-
-static void letsketch_remove(struct hid_device *hdev)
-{
-	struct letsketch_data *data = hid_get_drvdata(hdev);
-
-	/*
-	 * hid_hw_stop() synchronously kills the URBs that deliver
-	 * raw_event(), so once it returns no path can re-arm
-	 * inrange_timer.  timer_shutdown_sync() then drains any
-	 * in-flight callback and permanently disables further
-	 * mod_timer() calls before devm releases data.
-	 */
-	hid_hw_stop(hdev);
-	timer_shutdown_sync(&data->inrange_timer);
+	return hid_hw_start(hdev, HID_CONNECT_HIDRAW);
 }
 
 static const struct hid_device_id letsketch_devices[] = {
@@ -343,7 +314,6 @@ static struct hid_driver letsketch_driver = {
 	.name = "letsketch",
 	.id_table = letsketch_devices,
 	.probe = letsketch_probe,
-	.remove = letsketch_remove,
 	.raw_event = letsketch_raw_event,
 };
 module_hid_driver(letsketch_driver);
