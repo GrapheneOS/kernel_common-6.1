@@ -501,6 +501,15 @@ DECLARE_HOOK(android_vh_cpu_cgroup_css_free,
 	TP_PROTO(struct cgroup_subsys_state *css),
 	TP_ARGS(css));
 
+DECLARE_HOOK(android_vh_io_schedule_profile,
+	TP_PROTO(unsigned long ret_ip, u64 duration_ns),
+	TP_ARGS(ret_ip, duration_ns));
+
+DECLARE_HOOK(android_vh_folio_wait_bit_profile,
+	TP_PROTO(unsigned long ret_ip, u64 duration_ns, int bit_nr,
+		 unsigned int caller_flags),
+	TP_ARGS(ret_ip, duration_ns, bit_nr, caller_flags));
+
 #endif /* _TRACE_HOOK_SCHED_H */
 /* This part must be outside protection */
 #include <trace/define_trace.h>

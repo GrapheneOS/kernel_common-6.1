@@ -762,3 +762,7 @@ __tracepoint_android_rvh_exit_read_taskinfo
 
 #required by mi_io_monitor.ko
 blk_mq_in_flight_rw
+__traceiter_android_vh_io_schedule_profile
+__tracepoint_android_vh_io_schedule_profile
+__traceiter_android_vh_folio_wait_bit_profile
+__tracepoint_android_vh_folio_wait_bit_profile

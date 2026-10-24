@@ -9022,11 +9022,18 @@ long __sched io_schedule_timeout(long timeout)
 {
 	int token;
 	long ret;
+	u64 start_ts = 0;
+
+	if (trace_android_vh_io_schedule_profile_enabled())
+		start_ts = ktime_get_ns();
 
 	token = io_schedule_prepare();
 	ret = schedule_timeout(timeout);
 	io_schedule_finish(token);
 
+	if (unlikely(start_ts))
+		trace_android_vh_io_schedule_profile(_RET_IP_,
+				ktime_get_ns() - start_ts);
 	return ret;
 }
 EXPORT_SYMBOL(io_schedule_timeout);
@@ -9034,10 +9041,18 @@ EXPORT_SYMBOL(io_schedule_timeout);
 void __sched io_schedule(void)
 {
 	int token;
+	u64 start_ts = 0;
+
+	if (trace_android_vh_io_schedule_profile_enabled())
+		start_ts = ktime_get_ns();
 
 	token = io_schedule_prepare();
 	schedule();
 	io_schedule_finish(token);
+
+	if (unlikely(start_ts))
+		trace_android_vh_io_schedule_profile(_RET_IP_,
+				ktime_get_ns() - start_ts);
 }
 EXPORT_SYMBOL(io_schedule);
 
