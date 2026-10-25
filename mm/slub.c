@@ -3894,12 +3894,26 @@ void kmem_cache_free_bulk(struct kmem_cache *s, size_t size, void **p)
 }
 EXPORT_SYMBOL(kmem_cache_free_bulk);
 
+/* Free checks for the active canary, so the error path needs this too. */
+static inline void activate_canaries_bulk(struct kmem_cache *s, int size,
+					  void **p)
+{
+	int k;
+
+	for (k = 0; k < size; k++) {
+		if (!is_kfence_address(p[k])) {
+			check_canary(s, p[k], s->random_inactive);
+			set_canary(s, p[k], s->random_active);
+		}
+	}
+}
+
 /* Note that interrupts must be enabled when calling this function. */
 int kmem_cache_alloc_bulk(struct kmem_cache *s, gfp_t flags, size_t size,
 			  void **p)
 {
 	struct kmem_cache_cpu *c;
-	int i, k;
+	int i;
 	struct obj_cgroup *objcg = NULL;
 
 	/* memcg and kmem_cache debug support */
@@ -3959,12 +3973,7 @@ int kmem_cache_alloc_bulk(struct kmem_cache *s, gfp_t flags, size_t size,
 	local_unlock_irq(&s->cpu_slab->lock);
 	slub_put_cpu_ptr(s->cpu_slab);
 
-	for (k = 0; k < i; k++) {
-		if (!is_kfence_address(p[k])) {
-			check_canary(s, p[k], s->random_inactive);
-			set_canary(s, p[k], s->random_active);
-		}
-	}
+	activate_canaries_bulk(s, i, p);
 
 	/*
 	 * memcg and kmem_cache debug support and memory initialization.
@@ -3975,6 +3984,7 @@ int kmem_cache_alloc_bulk(struct kmem_cache *s, gfp_t flags, size_t size,
 	return i;
 error:
 	slub_put_cpu_ptr(s->cpu_slab);
+	activate_canaries_bulk(s, i, p);
 	slab_post_alloc_hook(s, objcg, flags, i, p, false);
 	kmem_cache_free_bulk(s, i, p);
 	return 0;
