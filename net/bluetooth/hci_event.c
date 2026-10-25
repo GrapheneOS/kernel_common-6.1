@@ -2312,8 +2312,8 @@ static void hci_cs_create_conn(struct hci_dev *hdev, __u8 status)
 		}
 	} else {
 		if (!conn) {
-			conn = hci_conn_add(hdev, ACL_LINK, &cp->bdaddr,
-					    HCI_ROLE_MASTER);
+			conn = hci_conn_add_unset(hdev, ACL_LINK, &cp->bdaddr,
+						  HCI_ROLE_MASTER);
 			if (!conn)
 				bt_dev_err(hdev, "no memory for new connection");
 		}
@@ -3155,8 +3155,8 @@ static void hci_conn_complete_evt(struct hci_dev *hdev, void *data,
 		    hci_bdaddr_list_lookup_with_flags(&hdev->accept_list,
 						      &ev->bdaddr,
 						      BDADDR_BREDR)) {
-			conn = hci_conn_add(hdev, ev->link_type, &ev->bdaddr,
-					    HCI_ROLE_SLAVE);
+			conn = hci_conn_add_unset(hdev, ev->link_type,
+						  &ev->bdaddr, HCI_ROLE_SLAVE);
 			if (!conn) {
 				bt_dev_err(hdev, "no memory for new conn");
 				goto unlock;
@@ -3180,19 +3180,23 @@ static void hci_conn_complete_evt(struct hci_dev *hdev, void *data,
 	 * As the connection handle is set here for the first time, it indicates
 	 * whether the connection is already set up.
 	 */
-	if (conn->handle != HCI_CONN_HANDLE_UNSET) {
+	if (!HCI_CONN_HANDLE_UNSET(conn->handle)) {
 		bt_dev_err(hdev, "Ignoring HCI_Connection_Complete for existing connection");
 		goto unlock;
 	}
 
 	if (!status) {
-		conn->handle = __le16_to_cpu(ev->handle);
-		if (conn->handle > HCI_CONN_HANDLE_MAX) {
+		if (__le16_to_cpu(ev->handle) > HCI_CONN_HANDLE_MAX) {
 			bt_dev_err(hdev, "Invalid handle: 0x%4.4x > 0x%4.4x",
-				   conn->handle, HCI_CONN_HANDLE_MAX);
+				   __le16_to_cpu(ev->handle),
+				   HCI_CONN_HANDLE_MAX);
 			status = HCI_ERROR_INVALID_PARAMETERS;
 			goto done;
 		}
+
+		if (HCI_CONN_HANDLE_UNSET(conn->handle))
+			ida_free(&hdev->unset_handle_ida, conn->handle);
+		conn->handle = __le16_to_cpu(ev->handle);
 
 		if (conn->type == ACL_LINK) {
 			conn->state = BT_CONFIG;
@@ -3350,8 +3354,8 @@ static void hci_conn_request_evt(struct hci_dev *hdev, void *data,
 	conn = hci_conn_hash_lookup_ba(hdev, ev->link_type,
 			&ev->bdaddr);
 	if (!conn) {
-		conn = hci_conn_add(hdev, ev->link_type, &ev->bdaddr,
-				    HCI_ROLE_SLAVE);
+		conn = hci_conn_add_unset(hdev, ev->link_type, &ev->bdaddr,
+					  HCI_ROLE_SLAVE);
 		if (!conn) {
 			bt_dev_err(hdev, "no memory for new connection");
 			goto unlock;
@@ -3862,6 +3866,8 @@ static u8 hci_cc_le_set_cig_params(struct hci_dev *hdev, void *data,
 		    conn->state == BT_CONNECTED)
 			continue;
 
+		if (HCI_CONN_HANDLE_UNSET(conn->handle))
+			ida_free(&hdev->unset_handle_ida, conn->handle);
 		conn->handle = __le16_to_cpu(rp->handle[i++]);
 
 		bt_dev_dbg(hdev, "%p handle 0x%4.4x link %p", conn,
@@ -5045,21 +5051,25 @@ static void hci_sync_conn_complete_evt(struct hci_dev *hdev, void *data,
 	 * As the connection handle is set here for the first time, it indicates
 	 * whether the connection is already set up.
 	 */
-	if (conn->handle != HCI_CONN_HANDLE_UNSET) {
+	if (!HCI_CONN_HANDLE_UNSET(conn->handle)) {
 		bt_dev_err(hdev, "Ignoring HCI_Sync_Conn_Complete event for existing connection");
 		goto unlock;
 	}
 
 	switch (status) {
 	case 0x00:
-		conn->handle = __le16_to_cpu(ev->handle);
-		if (conn->handle > HCI_CONN_HANDLE_MAX) {
+		if (__le16_to_cpu(ev->handle) > HCI_CONN_HANDLE_MAX) {
 			bt_dev_err(hdev, "Invalid handle: 0x%4.4x > 0x%4.4x",
-				   conn->handle, HCI_CONN_HANDLE_MAX);
+				   __le16_to_cpu(ev->handle),
+				   HCI_CONN_HANDLE_MAX);
 			status = HCI_ERROR_INVALID_PARAMETERS;
 			conn->state = BT_CLOSED;
 			break;
 		}
+
+		if (HCI_CONN_HANDLE_UNSET(conn->handle))
+			ida_free(&hdev->unset_handle_ida, conn->handle);
+		conn->handle = __le16_to_cpu(ev->handle);
 
 		conn->state  = BT_CONNECTED;
 		conn->type   = ev->link_type;
@@ -5747,7 +5757,7 @@ static void le_conn_complete_evt(struct hci_dev *hdev, u8 status,
 		if (status)
 			goto unlock;
 
-		conn = hci_conn_add(hdev, LE_LINK, bdaddr, role);
+		conn = hci_conn_add_unset(hdev, LE_LINK, bdaddr, role);
 		if (!conn) {
 			bt_dev_err(hdev, "no memory for new connection");
 			goto unlock;
@@ -5785,7 +5795,7 @@ static void le_conn_complete_evt(struct hci_dev *hdev, u8 status,
 	 * As the connection handle is set here for the first time, it indicates
 	 * whether the connection is already set up.
 	 */
-	if (conn->handle != HCI_CONN_HANDLE_UNSET) {
+	if (!HCI_CONN_HANDLE_UNSET(conn->handle)) {
 		bt_dev_err(hdev, "Ignoring HCI_Connection_Complete for existing connection");
 		goto unlock;
 	}
@@ -5843,6 +5853,8 @@ static void le_conn_complete_evt(struct hci_dev *hdev, u8 status,
 		mgmt_device_connected(hdev, conn, NULL, 0);
 
 	conn->sec_level = BT_SECURITY_LOW;
+	if (HCI_CONN_HANDLE_UNSET(conn->handle))
+		ida_free(&hdev->unset_handle_ida, conn->handle);
 	conn->handle = handle;
 	conn->state = BT_CONFIG;
 
@@ -6844,12 +6856,12 @@ static void hci_le_cis_req_evt(struct hci_dev *hdev, void *data,
 
 	cis = hci_conn_hash_lookup_handle(hdev, cis_handle);
 	if (!cis) {
-		cis = hci_conn_add(hdev, ISO_LINK, &acl->dst, HCI_ROLE_SLAVE);
+		cis = hci_conn_add(hdev, ISO_LINK, &acl->dst, HCI_ROLE_SLAVE,
+				   cis_handle);
 		if (!cis) {
 			hci_le_reject_cis(hdev, ev->cis_handle);
 			goto unlock;
 		}
-		cis->handle = cis_handle;
 	}
 
 	cis->iso_qos.cig = ev->cig_id;
@@ -6891,8 +6903,11 @@ static void hci_le_create_big_complete_evt(struct hci_dev *hdev, void *data,
 		goto unlock;
 	}
 
-	if (ev->num_bis)
+	if (ev->num_bis) {
+		if (HCI_CONN_HANDLE_UNSET(conn->handle))
+			ida_free(&hdev->unset_handle_ida, conn->handle);
 		conn->handle = __le16_to_cpu(ev->bis_handle[0]);
+	}
 
 	if (!ev->status) {
 		conn->state = BT_CONNECTED;
@@ -6934,10 +6949,9 @@ static void hci_le_big_sync_established_evt(struct hci_dev *hdev, void *data,
 		bis = hci_conn_hash_lookup_handle(hdev, handle);
 		if (!bis) {
 			bis = hci_conn_add(hdev, ISO_LINK, BDADDR_ANY,
-					   HCI_ROLE_SLAVE);
+					   HCI_ROLE_SLAVE, handle);
 			if (!bis)
 				continue;
-			bis->handle = handle;
 		}
 
 		bis->iso_qos.big = ev->handle;
