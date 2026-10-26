@@ -25,7 +25,6 @@
 #include <linux/usb/serial.h>
 #include <linux/usb/cdc.h>
 #include "visor.h"
-// Blank line added for Android Canary build test of branch android14-6.1-lts
 
 /*
  * Version Information
