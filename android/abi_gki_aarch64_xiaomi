@@ -127,6 +127,8 @@
   __tracepoint_android_rvh_check_preempt_tick
   __tracepoint_android_rvh_dequeue_entity
   __tracepoint_android_rvh_enqueue_entity
+  __traceiter_android_vh_adjust_nr_reclaimed
+  __tracepoint_android_vh_adjust_nr_reclaimed
   __traceiter_android_vh_alloc_flags_cma_adjust
   __traceiter_android_vh_rmqueue_cma_fallback
   __tracepoint_android_vh_alloc_flags_cma_adjust
