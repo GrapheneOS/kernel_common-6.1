@@ -1028,7 +1028,8 @@ static int __init task_struct_vendor_size_setup(char *str)
 early_param("android_arch_task_struct_size", task_struct_vendor_size_setup);
 #endif
 
-asmlinkage __visible void __init __no_sanitize_address start_kernel(void)
+asmlinkage __visible __init __no_sanitize_address __no_stack_protector
+void start_kernel(void)
 {
 	char *command_line;
 	char *after_dashes;
