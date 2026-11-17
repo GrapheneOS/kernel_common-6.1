@@ -91,8 +91,6 @@ static int reconn_set_ipaddr_from_hostname(struct TCP_Server_Info *server)
 	int rc;
 	int len;
 	char *unc, *ipaddr = NULL;
-	time64_t expiry, now;
-	unsigned long ttl = SMB_DNS_RESOLVE_INTERVAL_DEFAULT;
 
 	if (!server->hostname)
 		return -EINVAL;
@@ -110,13 +108,13 @@ static int reconn_set_ipaddr_from_hostname(struct TCP_Server_Info *server)
 	}
 	scnprintf(unc, len, "\\\\%s", server->hostname);
 
-	rc = dns_resolve_server_name_to_ip(unc, &ipaddr, &expiry);
+	rc = dns_resolve_server_name_to_ip(unc, &ipaddr, NULL);
 	kfree(unc);
 
 	if (rc < 0) {
 		cifs_dbg(FYI, "%s: failed to resolve server part of %s to IP: %d\n",
 			 __func__, server->hostname, rc);
-		goto requeue_resolve;
+		return rc;
 	}
 
 	spin_lock(&server->srv_lock);
@@ -125,22 +123,7 @@ static int reconn_set_ipaddr_from_hostname(struct TCP_Server_Info *server)
 	spin_unlock(&server->srv_lock);
 	kfree(ipaddr);
 
-	/* rc == 1 means success here */
-	if (rc) {
-		now = ktime_get_real_seconds();
-		if (expiry && expiry > now)
-			/*
-			 * To make sure we don't use the cached entry, retry 1s
-			 * after expiry.
-			 */
-			ttl = max_t(unsigned long, expiry - now, SMB_DNS_RESOLVE_INTERVAL_MIN) + 1;
-	}
 	rc = !rc ? -1 : 0;
-
-requeue_resolve:
-	cifs_dbg(FYI, "%s: next dns resolution scheduled for %lu seconds in the future\n",
-		 __func__, ttl);
-	mod_delayed_work(cifsiod_wq, &server->resolve, (ttl * HZ));
 
 	return rc;
 }
@@ -163,26 +146,6 @@ static void smb2_query_server_interfaces(struct work_struct *work)
 
 	queue_delayed_work(cifsiod_wq, &tcon->query_interfaces,
 			   (SMB_INTERFACE_POLL_INTERVAL * HZ));
-}
-
-static void cifs_resolve_server(struct work_struct *work)
-{
-	int rc;
-	struct TCP_Server_Info *server = container_of(work,
-					struct TCP_Server_Info, resolve.work);
-
-	cifs_server_lock(server);
-
-	/*
-	 * Resolve the hostname again to make sure that IP address is up-to-date.
-	 */
-	rc = reconn_set_ipaddr_from_hostname(server);
-	if (rc) {
-		cifs_dbg(FYI, "%s: failed to resolve hostname: %d\n",
-				__func__, rc);
-	}
-
-	cifs_server_unlock(server);
 }
 
 #define set_need_reco(server) \
@@ -1026,7 +989,6 @@ static void clean_demultiplex_info(struct TCP_Server_Info *server)
 	spin_unlock(&server->srv_lock);
 
 	cancel_delayed_work_sync(&server->echo);
-	cancel_delayed_work_sync(&server->resolve);
 
 	spin_lock(&server->srv_lock);
 	server->tcpStatus = CifsExiting;
@@ -1705,7 +1667,6 @@ cifs_put_tcp_session(struct TCP_Server_Info *server, int from_reconnect)
 		cifs_put_tcp_session(server->primary_server, from_reconnect);
 
 	cancel_delayed_work_sync(&server->echo);
-	cancel_delayed_work_sync(&server->resolve);
 
 	if (from_reconnect)
 		/*
@@ -1801,7 +1762,6 @@ cifs_get_tcp_session(struct smb3_fs_context *ctx,
 	INIT_LIST_HEAD(&tcp_ses->tcp_ses_list);
 	INIT_LIST_HEAD(&tcp_ses->smb_ses_list);
 	INIT_DELAYED_WORK(&tcp_ses->echo, cifs_echo_request);
-	INIT_DELAYED_WORK(&tcp_ses->resolve, cifs_resolve_server);
 	INIT_DELAYED_WORK(&tcp_ses->reconnect, smb2_reconnect_server);
 	mutex_init(&tcp_ses->reconnect_mutex);
 #ifdef CONFIG_CIFS_DFS_UPCALL
@@ -1857,23 +1817,13 @@ smbd_connected:
 	 * this will succeed. No need for try_module_get().
 	 */
 	__module_get(THIS_MODULE);
-	tcp_ses->tsk = kthread_run(cifs_demultiplex_thread,
-				  tcp_ses, "cifsd");
-	if (IS_ERR(tcp_ses->tsk)) {
-		rc = PTR_ERR(tcp_ses->tsk);
-		cifs_dbg(VFS, "error %d create cifsd thread\n", rc);
-		module_put(THIS_MODULE);
-		goto out_err_crypto_release;
-	}
 	tcp_ses->min_offload = ctx->min_offload;
 	/*
 	 * at this point we are the only ones with the pointer
 	 * to the struct since the kernel thread not created yet
 	 * no need to spinlock this update of tcpStatus
 	 */
-	spin_lock(&tcp_ses->srv_lock);
 	tcp_ses->tcpStatus = CifsNeedNegotiate;
-	spin_unlock(&tcp_ses->srv_lock);
 
 	if ((ctx->max_credits < 20) || (ctx->max_credits > 60000))
 		tcp_ses->max_credits = SMB2_MAX_CREDITS_AVAILABLE;
@@ -1882,7 +1832,16 @@ smbd_connected:
 
 	tcp_ses->nr_targets = 1;
 	tcp_ses->ignore_signature = ctx->ignore_signature;
-	/* thread spawned, put it on the list */
+
+	tcp_ses->tsk = kthread_create(cifs_demultiplex_thread,
+				  tcp_ses, "cifsd");
+	if (IS_ERR(tcp_ses->tsk)) {
+		rc = PTR_ERR(tcp_ses->tsk);
+		cifs_dbg(VFS, "error %d create cifsd thread\n", rc);
+		module_put(THIS_MODULE);
+		goto out_err_crypto_release;
+	}
+	/* thread created, put it on the list */
 	spin_lock(&cifs_tcp_ses_lock);
 	list_add(&tcp_ses->tcp_ses_list, &cifs_tcp_ses_list);
 	spin_unlock(&cifs_tcp_ses_lock);
@@ -1890,11 +1849,11 @@ smbd_connected:
 	/* queue echo request delayed work */
 	queue_delayed_work(cifsiod_wq, &tcp_ses->echo, tcp_ses->echo_interval);
 
-	/* queue dns resolution delayed work */
-	cifs_dbg(FYI, "%s: next dns resolution scheduled for %d seconds in the future\n",
-		 __func__, SMB_DNS_RESOLVE_INTERVAL_DEFAULT);
-
-	queue_delayed_work(cifsiod_wq, &tcp_ses->resolve, (SMB_DNS_RESOLVE_INTERVAL_DEFAULT * HZ));
+	/*
+	 * Use split create/wake logic to ensure that tcp_ses is fully populated
+	 * and tcp_ses->tsk is valid
+	 */
+	wake_up_process(tcp_ses->tsk);
 
 	return tcp_ses;
 
