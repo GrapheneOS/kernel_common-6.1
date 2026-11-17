@@ -804,7 +804,10 @@ void dc_dmub_srv_log_diagnostic_data(struct dc_dmub_srv *dc_dmub_srv)
 {
 	struct dmub_diagnostic_data diag_data = {0};
 
-	if (!dc_dmub_srv || !dc_dmub_srv->dmub) {
+	if (!dc_dmub_srv)
+		return;
+
+	if (!dc_dmub_srv->dmub) {
 		DC_LOG_ERROR("%s: invalid parameters.", __func__);
 		return;
 	}
@@ -1033,4 +1036,36 @@ bool dc_dmub_check_min_version(struct dmub_srv *srv)
 	if (!srv->hw_funcs.is_psrsu_supported)
 		return true;
 	return srv->hw_funcs.is_psrsu_supported(srv);
+}
+
+void dc_dmub_srv_enable_dpia_trace(const struct dc *dc)
+{
+	struct dc_dmub_srv *dc_dmub_srv = dc->ctx->dmub_srv;
+	struct dmub_srv *dmub;
+	enum dmub_status status;
+	static const uint32_t timeout_us = 30;
+
+	if (!dc_dmub_srv)
+		return;
+
+	if (!dc_dmub_srv->dmub) {
+		DC_LOG_ERROR("%s: invalid parameters.", __func__);
+		return;
+	}
+
+	dmub = dc_dmub_srv->dmub;
+
+	status = dmub_srv_send_gpint_command(dmub, DMUB_GPINT__SET_TRACE_BUFFER_MASK_WORD1, 0x0010, timeout_us);
+	if (status != DMUB_STATUS_OK) {
+		DC_LOG_ERROR("timeout updating trace buffer mask word\n");
+		return;
+	}
+
+	status = dmub_srv_send_gpint_command(dmub, DMUB_GPINT__UPDATE_TRACE_BUFFER_MASK, 0x0000, timeout_us);
+	if (status != DMUB_STATUS_OK) {
+		DC_LOG_ERROR("timeout updating trace buffer mask word\n");
+		return;
+	}
+
+	DC_LOG_DEBUG("Enabled DPIA trace\n");
 }
