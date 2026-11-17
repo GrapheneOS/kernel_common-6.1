@@ -96,19 +96,24 @@ static inline void unpack_scmi_header(u32 msg_hdr, struct scmi_msg_hdr *hdr)
 
 struct scmi_revision_info *
 scmi_revision_area_get(const struct scmi_protocol_handle *ph);
-int scmi_handle_put(const struct scmi_handle *handle);
-void scmi_device_link_add(struct device *consumer, struct device *supplier);
-struct scmi_handle *scmi_handle_get(struct device *dev);
-void scmi_set_handle(struct scmi_device *scmi_dev);
 void scmi_setup_protocol_implemented(const struct scmi_protocol_handle *ph,
 				     u8 *prot_imp);
 
 int __init scmi_bus_init(void);
 void __exit scmi_bus_exit(void);
+extern struct bus_type scmi_bus_type;
 
-const struct scmi_protocol *scmi_protocol_get(int protocol_id);
-void scmi_protocol_put(int protocol_id);
+#define SCMI_BUS_NOTIFY_DEVICE_REQUEST		0
+#define SCMI_BUS_NOTIFY_DEVICE_UNREQUEST	1
+extern struct blocking_notifier_head scmi_requested_devices_nh;
 
+struct scmi_device *scmi_device_create(struct device_node *np,
+				       struct device *parent, int protocol,
+				       const char *name);
+void scmi_device_destroy(struct device *parent, int protocol, const char *name);
+
+int __scmi_protocol_register(const struct scmi_protocol *proto);
+void __scmi_protocol_unregister(const struct scmi_protocol *proto);
 int scmi_protocol_acquire(const struct scmi_handle *handle, u8 protocol_id);
 void scmi_protocol_release(const struct scmi_handle *handle, u8 protocol_id);
 
@@ -169,11 +174,6 @@ struct scmi_transport_ops {
 	void (*clear_channel)(struct scmi_chan_info *cinfo);
 	bool (*poll_done)(struct scmi_chan_info *cinfo, struct scmi_xfer *xfer);
 };
-
-int scmi_protocol_device_request(const struct scmi_device_id *id_table);
-void scmi_protocol_device_unrequest(const struct scmi_device_id *id_table);
-struct scmi_device *scmi_child_dev_find(struct device *parent,
-					int prot_id, const char *name);
 
 /**
  * struct scmi_desc - Description of SoC integration
