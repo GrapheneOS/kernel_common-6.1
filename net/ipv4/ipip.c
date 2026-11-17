@@ -240,7 +240,7 @@ static int ipip_tunnel_rcv(struct sk_buff *skb, u8 ipproto)
 		if (tunnel->collect_md) {
 			tun_dst = ip_tun_rx_dst(skb, 0, 0, 0);
 			if (!tun_dst)
-				return 0;
+				goto drop;
 		}
 		skb_reset_mac_header(skb);
 
