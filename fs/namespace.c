@@ -1738,6 +1738,9 @@ out:
  * detach_mounts allows lazily unmounting those mounts instead of
  * leaking them.
  *
+ * The dentry is unhashed before the mounts go so that no lookup finds
+ * what they covered. The caller removes it for good afterwards.
+ *
  * The caller may hold dentry->d_inode->i_mutex.
  */
 void __detach_mounts(struct dentry *dentry)
@@ -1751,6 +1754,8 @@ void __detach_mounts(struct dentry *dentry)
 	if (!mp)
 		goto out_unlock;
 
+	/* the name goes first, what covered it goes second */
+	d_drop(dentry);
 	event++;
 	while (!hlist_empty(&mp->m_list)) {
 		mnt = hlist_entry(mp->m_list.first, struct mount, mnt_mp_list);
@@ -2215,13 +2220,29 @@ static int attach_recursive_mnt(struct mount *source_mnt,
 			struct mountpoint *dest_mp,
 			bool moving)
 {
-	struct user_namespace *user_ns = current->nsproxy->mnt_ns->user_ns;
 	HLIST_HEAD(tree_list);
 	struct mnt_namespace *ns = dest_mnt->mnt_ns;
+	struct user_namespace *user_ns = ns->user_ns;
 	struct mountpoint *smp;
 	struct mount *child, *p;
 	struct hlist_node *n;
 	int err;
+
+	/*
+	 * A caller in an unprivileged mount namespaces may trigger an
+	 * automount and propagate locked mounts into privileged mount
+	 * namespaces. Take ownership from the target mount namespace.
+	 * It's equivalent for everything but the automount case.
+	 *
+	 * Detached trees in anonymous mount namespaces by be handed
+	 * over via SCM_RIGHTS or inherited in other ways on purpose
+	 * the attaching task's mount namespace is authoritative, not
+	 * the creator of the detached tree.
+	 */
+	if (is_anon_ns(ns))
+		user_ns = current->nsproxy->mnt_ns->user_ns;
+	else
+		user_ns = ns->user_ns;
 
 	/* Preallocate a mountpoint in case the new mounts need
 	 * to be tucked under other mounts.
@@ -2430,6 +2451,9 @@ static struct mount *__do_loopback(struct path *old_path, int recurse)
 
 	if (!check_mnt(old) && old_path->dentry->d_op != &ns_dentry_operations)
 		return mnt;
+
+	if (recurse && !old->mnt_ns)
+		return ERR_PTR(-EINVAL);
 
 	if (!recurse && has_locked_children(old, old_path->dentry))
 		return mnt;
@@ -4219,6 +4243,13 @@ static int do_mount_setattr(struct path *path, struct mount_kattr *kattr)
 		 * propagation.
 		 */
 		namespace_lock();
+		/* invent_group_ids() walks the tree, only walk a mounted one */
+		if (!is_mounted(&mnt->mnt) ||
+		    ((mnt_has_parent(mnt) || !is_anon_ns(mnt->mnt_ns)) &&
+		     !check_mnt(mnt))) {
+			namespace_unlock();
+			return -EINVAL;
+		}
 		if (kattr->propagation == MS_SHARED) {
 			err = invent_group_ids(mnt, kattr->recurse);
 			if (err) {
@@ -4231,6 +4262,7 @@ static int do_mount_setattr(struct path *path, struct mount_kattr *kattr)
 	err = -EINVAL;
 	lock_mount_hash();
 
+	/* Checked under namespace_sem already if the propagation changes. */
 	/* Ensure that this isn't anything purely vfs internal. */
 	if (!is_mounted(&mnt->mnt))
 		goto out;
