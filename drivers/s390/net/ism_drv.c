@@ -40,6 +40,7 @@ static int ism_cmd(struct ism_dev *ism, void *cmd)
 	struct ism_req_hdr *req = cmd;
 	struct ism_resp_hdr *resp = cmd;
 
+	spin_lock(&ism->cmd_lock);
 	__ism_write_cmd(ism, req + 1, sizeof(*req), req->len - sizeof(*req));
 	__ism_write_cmd(ism, req, 0, sizeof(*req));
 
@@ -53,6 +54,7 @@ static int ism_cmd(struct ism_dev *ism, void *cmd)
 	}
 	__ism_read_cmd(ism, resp + 1, sizeof(*resp), resp->len - sizeof(*resp));
 out:
+	spin_unlock(&ism->cmd_lock);
 	return resp->ret;
 }
 
@@ -215,14 +217,14 @@ static int ism_query_rgid(struct smcd_dev *smcd, u64 rgid, u32 vid_valid,
 	return ism_cmd(ism, &cmd);
 }
 
-static void ism_free_dmb(struct ism_dev *ism, struct smcd_dmb *dmb)
+static void ism_free_dmb(struct ism_dev *ism, struct ism_dmb *dmb)
 {
 	clear_bit(dmb->sba_idx, ism->sba_bitmap);
 	dma_free_coherent(&ism->pdev->dev, dmb->dmb_len,
 			  dmb->cpu_addr, dmb->dma_addr);
 }
 
-static int ism_alloc_dmb(struct ism_dev *ism, struct smcd_dmb *dmb)
+static int ism_alloc_dmb(struct ism_dev *ism, struct ism_dmb *dmb)
 {
 	unsigned long bit;
 
@@ -250,7 +252,7 @@ static int ism_alloc_dmb(struct ism_dev *ism, struct smcd_dmb *dmb)
 	return dmb->cpu_addr ? 0 : -ENOMEM;
 }
 
-static int ism_register_dmb(struct smcd_dev *smcd, struct smcd_dmb *dmb)
+static int ism_register_dmb(struct smcd_dev *smcd, struct ism_dmb *dmb)
 {
 	struct ism_dev *ism = smcd->priv;
 	union ism_reg_dmb cmd;
@@ -281,7 +283,12 @@ out:
 	return ret;
 }
 
-static int ism_unregister_dmb(struct smcd_dev *smcd, struct smcd_dmb *dmb)
+static int smcd_register_dmb(struct smcd_dev *smcd, struct smcd_dmb *dmb)
+{
+	return ism_register_dmb(smcd, (struct ism_dmb *)dmb);
+}
+
+static int ism_unregister_dmb(struct smcd_dev *smcd, struct ism_dmb *dmb)
 {
 	struct ism_dev *ism = smcd->priv;
 	union ism_unreg_dmb cmd;
@@ -300,6 +307,11 @@ static int ism_unregister_dmb(struct smcd_dev *smcd, struct smcd_dmb *dmb)
 	ism_free_dmb(ism, dmb);
 out:
 	return ret;
+}
+
+static int smcd_unregister_dmb(struct smcd_dev *smcd, struct smcd_dmb *dmb)
+{
+	return ism_unregister_dmb(smcd, (struct ism_dmb *)dmb);
 }
 
 static int ism_add_vlan_id(struct smcd_dev *smcd, u64 vlan_id)
@@ -474,8 +486,8 @@ static irqreturn_t ism_handle_irq(int irq, void *data)
 
 static const struct smcd_ops ism_ops = {
 	.query_remote_gid = ism_query_rgid,
-	.register_dmb = ism_register_dmb,
-	.unregister_dmb = ism_unregister_dmb,
+	.register_dmb = smcd_register_dmb,
+	.unregister_dmb = smcd_unregister_dmb,
 	.add_vlan_id = ism_add_vlan_id,
 	.del_vlan_id = ism_del_vlan_id,
 	.set_vlan_required = ism_set_vlan_required,
@@ -545,6 +557,7 @@ static int ism_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 		return -ENOMEM;
 
 	spin_lock_init(&ism->lock);
+	spin_lock_init(&ism->cmd_lock);
 	dev_set_drvdata(&pdev->dev, ism);
 	ism->pdev = pdev;
 
