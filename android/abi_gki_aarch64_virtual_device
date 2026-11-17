@@ -584,6 +584,7 @@
   wake_up_bit
 
 # required by btusb.ko
+  baswap
   btbcm_set_bdaddr
   btbcm_setup_apple
   btbcm_setup_patchram
