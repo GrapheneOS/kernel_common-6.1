@@ -334963,6 +334963,13 @@ function {
   parameter_id: 0xe5e56f65
 }
 function {
+  id: 0x9c61f4f3
+  return_type_id: 0x6720d32f
+  parameter_id: 0x0ee13889
+  parameter_id: 0x92233392
+  parameter_id: 0x4754c3e4
+}
+function {
   id: 0x9c639284
   return_type_id: 0x6720d32f
   parameter_id: 0x0665e6b6
@@ -407939,6 +407946,15 @@ elf_symbol {
   full_name: "schedule_hrtimeout"
 }
 elf_symbol {
+  id: 0x8df6a8b8
+  name: "schedule_hrtimeout_range"
+  is_defined: true
+  symbol_type: FUNCTION
+  crc: 0xd03eaf4c
+  type_id: 0x9c61f4f3
+  full_name: "schedule_hrtimeout_range"
+}
+elf_symbol {
   id: 0x34a94ed3
   name: "schedule_timeout"
   is_defined: true
@@ -433462,6 +433478,7 @@ interface {
   symbol_id: 0x67d7bbc2
   symbol_id: 0x11ca9115
   symbol_id: 0xf4841d33
+  symbol_id: 0x8df6a8b8
   symbol_id: 0x34a94ed3
   symbol_id: 0x3bc1cc84
   symbol_id: 0xb05cd7bd

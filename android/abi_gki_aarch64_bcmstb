@@ -1778,6 +1778,7 @@
   rt_mutex_trylock
   rt_mutex_unlock
   rt_mutex_lock_interruptible
+  schedule_hrtimeout_range
 
 # required by nexus.ko
   recalc_sigpending
