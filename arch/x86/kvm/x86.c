@@ -11631,7 +11631,8 @@ static bool kvm_is_valid_sregs(struct kvm_vcpu *vcpu, struct kvm_sregs *sregs)
 	}
 
 	return kvm_is_valid_cr4(vcpu, sregs->cr4) &&
-	       kvm_is_valid_cr0(vcpu, sregs->cr0);
+	       kvm_is_valid_cr0(vcpu, sregs->cr0) &&
+	       kvm_valid_efer(vcpu, sregs->efer);
 }
 
 static int __set_sregs_common(struct kvm_vcpu *vcpu, struct kvm_sregs *sregs,
@@ -12430,6 +12431,12 @@ int kvm_arch_hardware_setup(void *opaque)
 		rdmsrl(MSR_IA32_XSS, host_xss);
 
 	kvm_init_pmu_capability();
+
+#ifdef CONFIG_X86_64
+	efer_reserved_bits = ~((u64)(EFER_SCE | EFER_LME | EFER_LMA));
+#else
+	efer_reserved_bits = ~((u64)EFER_SCE);
+#endif
 
 	r = ops->hardware_setup();
 	if (r != 0)
