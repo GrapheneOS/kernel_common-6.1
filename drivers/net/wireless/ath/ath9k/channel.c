@@ -1368,6 +1368,8 @@ void ath9k_init_channel_context(struct ath_softc *sc)
 
 void ath9k_deinit_channel_context(struct ath_softc *sc)
 {
+	del_timer_sync(&sc->sched.timer);
+	del_timer_sync(&sc->offchannel.timer);
 	cancel_work_sync(&sc->chanctx_work);
 }
 

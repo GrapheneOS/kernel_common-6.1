@@ -817,7 +817,11 @@ static int uart_set_info(struct tty_struct *tty, struct tty_port *port,
 	upf_t old_flags, new_flags;
 	int retval = 0;
 
-	if (!uport || tty_io_error(tty))
+	/*
+	 * TTY_IO_ERROR is also set on a port that could not be started, and
+	 * this is how such a port is configured. Only refuse a hung up port.
+	 */
+	if (!uport || !tty_port_active(port))
 		return -EIO;
 
 	new_port = new_info->port;
@@ -1150,7 +1154,8 @@ static int uart_do_autoconfig(struct tty_struct *tty, struct uart_state *state)
 		return -ERESTARTSYS;
 
 	uport = uart_port_check(state);
-	if (!uport || tty_io_error(tty)) {
+	/* As in uart_set_info(), only refuse a hung up port. */
+	if (!uport || !tty_port_active(port)) {
 		ret = -EIO;
 		goto out;
 	}
@@ -3260,6 +3265,13 @@ int uart_remove_one_port(struct uart_driver *drv, struct uart_port *uport)
 	 */
 	if (uart_console(uport))
 		unregister_console(uport->cons);
+
+	scoped_guard(mutex, &port->mutex) {
+		port->console = false;
+
+		if (tty_port_initialized(port))
+			uart_shutdown(NULL, state);
+	}
 
 	/*
 	 * Free the port IO and memory resources, if any.
