@@ -1305,6 +1305,7 @@
   __num_online_cpus
   sched_clock
   skb_coalesce_rx_frag
+  skb_copy_ubufs
   __skb_flow_dissect
   skb_page_frag_refill
   skb_partial_csum_set
