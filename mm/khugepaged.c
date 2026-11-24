@@ -2178,6 +2178,7 @@ static int hpage_collapse_scan_file(struct mm_struct *mm, unsigned long addr,
 	int present, swap;
 	int node = NUMA_NO_NODE;
 	int result = SCAN_SUCCEED;
+	unsigned long failed_pfn = -1;
 
 	present = 0;
 	swap = 0;
@@ -2211,6 +2212,7 @@ static int hpage_collapse_scan_file(struct mm_struct *mm, unsigned long addr,
 					/* Maybe PMD-mapped */
 					? SCAN_PTE_MAPPED_HUGEPAGE
 					: SCAN_PAGE_COMPOUND;
+			failed_pfn = page_to_pfn(page);
 			/*
 			 * For SCAN_PTE_MAPPED_HUGEPAGE, further processing
 			 * by the caller won't touch the page cache, and so
@@ -2223,18 +2225,21 @@ static int hpage_collapse_scan_file(struct mm_struct *mm, unsigned long addr,
 		node = page_to_nid(page);
 		if (hpage_collapse_scan_abort(node, cc)) {
 			result = SCAN_SCAN_ABORT;
+			failed_pfn = page_to_pfn(page);
 			break;
 		}
 		cc->node_load[node]++;
 
 		if (!PageLRU(page)) {
 			result = SCAN_PAGE_LRU;
+			failed_pfn = page_to_pfn(page);
 			break;
 		}
 
 		if (page_count(page) !=
 		    1 + page_mapcount(page) + page_has_private(page)) {
 			result = SCAN_PAGE_COUNT;
+			failed_pfn = page_to_pfn(page);
 			break;
 		}
 
@@ -2263,7 +2268,7 @@ static int hpage_collapse_scan_file(struct mm_struct *mm, unsigned long addr,
 		}
 	}
 
-	trace_mm_khugepaged_scan_file(mm, page, file, present, swap, result);
+	trace_mm_khugepaged_scan_file(mm, failed_pfn, file, present, swap, result);
 	return result;
 }
 #else
