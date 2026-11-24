@@ -118,25 +118,18 @@ void can_stat_update(struct timer_list *t)
 	struct can_pkg_stats *pkg_stats = net->can.pkg_stats;
 	unsigned long j = jiffies; /* snapshot */
 
-	/* restart counting in timer context on user request */
-	if (user_reset)
+	/*
+	 * Restart counting in timer context on user request, on jiffies
+	 * overflow or to prevent overflows in calc_rate() and in the
+	 * match ratio calculation.
+	 */
+	if (user_reset || j < pkg_stats->jiffies_init ||
+	    pkg_stats->rx_frames > (ULONG_MAX / HZ) ||
+	    pkg_stats->tx_frames > (ULONG_MAX / HZ) ||
+	    pkg_stats->matches > (ULONG_MAX / 100)) {
 		can_init_stats(net);
-
-	/* restart counting on jiffies overflow */
-	if (j < pkg_stats->jiffies_init)
-		can_init_stats(net);
-
-	/* prevent overflow in calc_rate() */
-	if (pkg_stats->rx_frames > (ULONG_MAX / HZ))
-		can_init_stats(net);
-
-	/* prevent overflow in calc_rate() */
-	if (pkg_stats->tx_frames > (ULONG_MAX / HZ))
-		can_init_stats(net);
-
-	/* matches overflow - very improbable */
-	if (pkg_stats->matches > (ULONG_MAX / 100))
-		can_init_stats(net);
+		goto out;
+	}
 
 	/* calc total values */
 	if (pkg_stats->rx_frames)
@@ -172,6 +165,7 @@ void can_stat_update(struct timer_list *t)
 	pkg_stats->rx_frames_delta = 0;
 	pkg_stats->matches_delta   = 0;
 
+out:
 	/* restart timer (one second) */
 	mod_timer(&net->can.stattimer, round_jiffies(jiffies + HZ));
 }
