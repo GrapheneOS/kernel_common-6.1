@@ -427,6 +427,7 @@ huge_unlock:
 		spin_unlock(ptl);
 		if (pageout)
 			__reclaim_pages(&page_list, private->private);
+		cond_resched();
 		return 0;
 	}
 
